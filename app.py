@@ -4,7 +4,10 @@ from email.mime.multipart import MIMEMultipart
 from flask import Flask, request, jsonify, render_template, Response, stream_with_context
 from datetime import datetime
 
-app = Flask(__name__)
+import os
+app = Flask(__name__, 
+            template_folder=os.path.join(os.getcwd(), 'templates'),
+            static_folder=os.path.join(os.getcwd(), 'static'))
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
