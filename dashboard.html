@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>آنالیزور هوشمند تماس فروش | دفترشما</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --bg2: #1a1d27;
+  --bg3: #232738;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #e8eaf0;
+  --text2: #9299b0;
+  --text3: #5c6280;
+  --green: #1fce8a; --green-bg: rgba(31,206,138,0.1);
+  --amber: #f5a623; --amber-bg: rgba(245,166,35,0.1);
+  --red:   #f0514f; --red-bg:   rgba(240,81,79,0.1);
+  --blue:  #4f8ef7; --blue-bg:  rgba(79,142,247,0.1);
+  --purple:#9b6ef7; --purple-bg:rgba(155,110,247,0.1);
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Tahoma,'Segoe UI',sans-serif; background: var(--bg); color: var(--text); direction: rtl; min-height: 100vh; }
+
+/* ── HEADER ── */
+.topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 14px 24px;
+  display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+.logo { width: 36px; height: 36px; border-radius: 10px; background: var(--blue-bg);
+  border: 1px solid var(--blue); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.topbar h1 { font-size: 15px; font-weight: 600; }
+.topbar small { font-size: 12px; color: var(--text3); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+  animation: pulse 2s infinite; margin-right: auto; }
+.live-dot.off { background: var(--text3); animation: none; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+.live-label { font-size: 12px; color: var(--text2); }
+.topbar-time { font-size: 12px; color: var(--text3); border: 1px solid var(--border); border-radius: 8px; padding: 4px 10px; }
+
+/* ── LAYOUT ── */
+.layout { display: grid; grid-template-columns: 280px 1fr; gap: 0; height: calc(100vh - 65px); }
+
+/* ── SIDEBAR ── */
+.sidebar { background: var(--bg2); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-header { padding: 16px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text2); font-weight: 500; }
+.stats-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+.stat-box { background: var(--bg2); padding: 14px; text-align: center; }
+.stat-box .n { font-size: 22px; font-weight: 700; color: var(--text); }
+.stat-box .l { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.sellers-section { flex: 1; overflow-y: auto; }
+.sellers-title { padding: 12px 16px; font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+.seller-row { padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .15s; }
+.seller-row:hover, .seller-row.active { background: var(--bg3); }
+.seller-row .s-name { font-size: 13px; font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.seller-row .s-bar-wrap { height: 4px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+.seller-row .s-bar { height: 100%; border-radius: 4px; transition: width .4s; }
+.seller-row .s-meta { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--text3); }
+.badge-score { padding: 2px 7px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+
+/* ── MAIN ── */
+.main { overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ── CALL CARD ── */
+.call-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; transition: border-color .3s; }
+.call-card.new-call { border-color: var(--blue); animation: cardIn .4s ease; }
+.call-card.analyzing { border-color: var(--amber); }
+@keyframes cardIn { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+
+.call-header { padding: 14px 16px; display: flex; align-items: center; gap: 12px; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--purple-bg);
+  border: 1px solid var(--purple); display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--purple); flex-shrink: 0; }
+.call-meta-top { flex: 1; }
+.call-meta-top .cn { font-size: 14px; font-weight: 600; }
+.call-meta-top .cm { font-size: 12px; color: var(--text2); margin-top: 2px; display: flex; gap: 12px; flex-wrap: wrap; }
+.chip { padding: 2px 8px; border-radius: 20px; font-size: 11px; }
+.chip-in  { background: var(--blue-bg);  color: var(--blue); }
+.chip-out { background: var(--green-bg); color: var(--green); }
+.score-ring { width: 52px; height: 52px; flex-shrink: 0; }
+
+/* آنالیز باکس */
+.analysis-box { border-top: 1px solid var(--border); padding: 16px; }
+.analyzing-state { display: flex; align-items: center; gap: 10px; padding: 12px; color: var(--amber); font-size: 13px; }
+.spinner { width: 16px; height: 16px; border: 2px solid var(--amber-bg); border-top-color: var(--amber);
+  border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.analysis-section { }
+.analysis-section h4 { font-size: 11px; color: var(--text3); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+.item-row { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px;
+  background: var(--bg3); border-radius: 8px; margin-bottom: 6px; font-size: 12px; line-height: 1.6; }
+.item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.dot-green { background: var(--green); }
+.dot-red   { background: var(--red); }
+.dot-blue  { background: var(--blue); }
+.suggestions-col { grid-column: 1 / -1; }
+.script-box { grid-column: 1 / -1; background: var(--purple-bg); border: 1px solid var(--purple);
+  border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.7; color: var(--text); }
+.script-box .sl { font-size: 11px; color: var(--purple); margin-bottom: 5px; font-weight: 600; }
+.follow-box { grid-column: 1 / -1; background: var(--blue-bg); border: 1px solid var(--blue);
+  border-radius: 8px; padding: 10px 14px; font-size: 12px; line-height: 1.7; color: var(--text2); }
+.follow-box .fl { font-size: 11px; color: var(--blue); margin-bottom: 4px; font-weight: 600; }
+
+.dur-bar-row { grid-column: 1 / -1; background: var(--bg3); border-radius: 8px; padding: 10px 14px; }
+.dur-bar-row .dl { font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+.dur-track { height: 6px; background: var(--bg); border-radius: 6px; overflow: hidden; }
+.dur-fill  { height: 100%; border-radius: 6px; transition: width .6s; }
+
+.empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
+.empty-state .ei { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* filter bar */
+.filter-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.filter-bar input, .filter-bar select {
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 7px 12px; font-size: 13px; color: var(--text); font-family: Tahoma;
+  outline: none; }
+.filter-bar input:focus, .filter-bar select:focus { border-color: var(--blue); }
+.fbtn { padding: 7px 16px; border-radius: 8px; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text); font-size: 13px; cursor: pointer; font-family: Tahoma; }
+.fbtn:hover { border-color: var(--blue); }
+.fbtn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">📞</div>
+  <div>
+    <h1>آنالیزور هوشمند تماس فروش</h1>
+    <small>متصل به دفترشما VoIP</small>
+  </div>
+  <div class="live-dot off" id="liveDot"></div>
+  <span class="live-label" id="liveLabel">در حال اتصال...</span>
+  <div class="topbar-time" id="clock"></div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="stats-mini" id="statsGrid">
+      <div class="stat-box"><div class="n" id="stToday">—</div><div class="l">تماس امروز</div></div>
+      <div class="stat-box"><div class="n" id="stScore">—</div><div class="l">میانگین امتیاز</div></div>
+      <div class="stat-box"><div class="n" id="stDur">—</div><div class="l">میانگین مدت</div></div>
+      <div class="stat-box"><div class="n" id="stSellers">—</div><div class="l">فروشنده فعال</div></div>
+    </div>
+    <div class="sellers-title">عملکرد فروشندگان امروز</div>
+    <div class="sellers-section" id="sellersList">
+      <div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">بارگذاری...</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainArea">
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <input type="date" id="fDate">
+      <input type="text" id="fSeller" placeholder="نام فروشنده...">
+      <button class="fbtn fbtn-primary" onclick="applyFilter()">اعمال فیلتر</button>
+      <button class="fbtn" onclick="clearFilter()">امروز</button>
+    </div>
+
+    <div id="callsList">
+      <div class="empty-state"><div class="ei">📵</div><p>در انتظار تماس...</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── utils ───────────────────────────────────────────────────
+function fmt(sec) { if (!sec) return '—'; return `${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}`; }
+function scoreColor(s) { return s>=70?'var(--green)':s>=45?'var(--amber)':'var(--red)'; }
+function scoreBg(s) { return s>=70?'var(--green-bg)':s>=45?'var(--amber-bg)':'var(--red-bg)'; }
+function initials(n) { return (n||'؟').split(' ').map(w=>w[0]).join('').slice(0,2); }
+function parseJ(s) { try{return JSON.parse(s);}catch{return [];} }
+function durColor(sec) { return sec<60?'var(--red)':sec<300?'var(--amber)':'var(--green)'; }
+function durPct(sec) { return Math.min(100, Math.round(sec/900*100)); }
+
+// clock
+function updateClock() {
+  const d=new Date();
+  document.getElementById('clock').textContent =
+    d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateClock,1000); updateClock();
+
+// ─── SSE live connection ──────────────────────────────────────
+let es;
+function connectSSE() {
+  es = new EventSource('/sse');
+  es.onopen = () => {
+    document.getElementById('liveDot').classList.remove('off');
+    document.getElementById('liveLabel').textContent = 'آنلاین - بلادرنگ';
+  };
+  es.onerror = () => {
+    document.getElementById('liveDot').classList.add('off');
+    document.getElementById('liveLabel').textContent = 'قطع شد - تلاش مجدد...';
+    setTimeout(connectSSE, 3000);
+  };
+  es.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'call_started') onCallStarted(msg.call);
+    if (msg.type === 'call_analyzed') onCallAnalyzed(msg.call, msg.stats);
+  };
+}
+connectSSE();
+
+// ─── state ───────────────────────────────────────────────────
+let allCalls = [];
+let pendingCards = {}; // call_id → card element
+
+// ─── initial load ─────────────────────────────────────────────
+async function loadAll() {
+  const date = document.getElementById('fDate').value;
+  const seller = document.getElementById('fSeller').value;
+  let url = '/api/calls?';
+  if (date) url += `date=${date}&`;
+  if (seller) url += `seller=${encodeURIComponent(seller)}&`;
+  const r = await fetch(url);
+  allCalls = await r.json();
+  renderCalls(allCalls);
+
+  const s = await fetch('/api/stats').then(r=>r.json());
+  renderStats(s);
+}
+
+function applyFilter() { loadAll(); }
+function clearFilter() {
+  document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('fSeller').value = '';
+  loadAll();
+}
+
+// ─── render stats ─────────────────────────────────────────────
+function renderStats(s) {
+  document.getElementById('stToday').textContent = s.today_calls ?? '—';
+  document.getElementById('stScore').textContent = s.avg_score ? s.avg_score+'/100' : '—';
+  document.getElementById('stDur').textContent = fmt(s.avg_duration);
+  document.getElementById('stSellers').textContent = s.sellers_today ?? '—';
+
+  const sl = document.getElementById('sellersList');
+  if (!s.sellers || !s.sellers.length) {
+    sl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">هنوز تماسی ثبت نشده</div>';
+    return;
+  }
+  sl.innerHTML = s.sellers.map(sv => {
+    const sc = sv.avg_score;
+    const col = scoreColor(sc);
+    return `<div class="seller-row">
+      <div class="s-name">
+        <span>${sv.name}</span>
+        <span class="badge-score" style="background:${scoreBg(sc)};color:${col}">${sc}</span>
+      </div>
+      <div class="s-bar-wrap"><div class="s-bar" style="width:${sc}%;background:${col}"></div></div>
+      <div class="s-meta"><span>${sv.count} تماس</span><span>${fmt(sv.avg_duration)} میانگین</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ─── render call list ─────────────────────────────────────────
+function renderCalls(calls) {
+  const el = document.getElementById('callsList');
+  if (!calls.length) {
+    el.innerHTML = '<div class="empty-state"><div class="ei">📵</div><p>در انتظار تماس...</p></div>';
+    return;
+  }
+  el.innerHTML = calls.map(c => buildCallCard(c)).join('');
+}
+
+function buildCallCard(c) {
+  const score = c.ai_score;
+  const hasAnalysis = score !== null && score !== undefined;
+  const strengths   = parseJ(c.ai_strengths);
+  const weaknesses  = parseJ(c.ai_weaknesses);
+  const suggestions = parseJ(c.ai_suggestions);
+  const dirChip = c.direction==='outgoing'
+    ? '<span class="chip chip-out">📞 خروجی</span>'
+    : '<span class="chip chip-in">📲 ورودی</span>';
+  const dur = c.duration || 0;
+
+  const analysisHTML = hasAnalysis ? buildAnalysisHTML(score, c, strengths, weaknesses, suggestions) :
+    `<div class="analysis-box"><div class="analyzing-state"><div class="spinner"></div>در حال آنالیز با هوش مصنوعی...</div></div>`;
+
+  return `<div class="call-card" id="card-${c.call_id || c.id}">
+    <div class="call-header">
+      <div class="avatar">${initials(c.seller_name)}</div>
+      <div class="call-meta-top">
+        <div class="cn">${c.seller_name || 'نامشخص'}</div>
+        <div class="cm">
+          ${dirChip}
+          <span>👤 ${c.customer_number || 'نامشخص'}</span>
+          <span>⏱ ${fmt(dur)}</span>
+          <span>🕐 ${(c.ended_at||c.created_at||'').substring(11,16)}</span>
+        </div>
+      </div>
+      ${hasAnalysis ? buildScoreRing(score) : ''}
+    </div>
+    ${analysisHTML}
+  </div>`;
+}
+
+function buildScoreRing(score) {
+  const col = scoreColor(score);
+  const r = 20, circ = 2*Math.PI*r, dash = circ * score/100;
+  return `<svg class="score-ring" viewBox="0 0 52 52">
+    <circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--bg3)" stroke-width="4"/>
+    <circle cx="26" cy="26" r="${r}" fill="none" stroke="${col}" stroke-width="4"
+      stroke-dasharray="${dash.toFixed(1)} ${(circ-dash).toFixed(1)}"
+      stroke-dashoffset="${(circ/4).toFixed(1)}" stroke-linecap="round" transform="rotate(-90 26 26)"/>
+    <text x="26" y="31" text-anchor="middle" font-size="11" font-weight="700" fill="${col}">${score}</text>
+  </svg>`;
+}
+
+function buildAnalysisHTML(score, c, strengths, weaknesses, suggestions) {
+  const dur = c.duration || 0;
+  const dp = durPct(dur);
+  const dc = durColor(dur);
+  return `<div class="analysis-box">
+    <div class="analysis-grid">
+
+      <div class="dur-bar-row">
+        <div class="dl">📊 ${c.ai_duration_analysis || ''}</div>
+        <div class="dur-track"><div class="dur-fill" style="width:${dp}%;background:${dc}"></div></div>
+      </div>
+
+      <div class="analysis-section">
+        <h4>✅ نقاط قوت</h4>
+        ${strengths.map(s=>`<div class="item-row"><div class="item-dot dot-green"></div><span>${s}</span></div>`).join('')||'<div class="item-row" style="color:var(--text3)">—</div>'}
+      </div>
+
+      <div class="analysis-section">
+        <h4>❌ نقاط ضعف</h4>
+        ${weaknesses.map(w=>`<div class="item-row"><div class="item-dot dot-red"></div><span>${w}</span></div>`).join('')||'<div class="item-row" style="color:var(--text3)">—</div>'}
+      </div>
+
+      <div class="analysis-section suggestions-col">
+        <h4>💡 راهکارهای بهبود</h4>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          ${suggestions.map(s=>`<div class="item-row"><div class="item-dot dot-blue"></div><span>${s}</span></div>`).join('')}
+        </div>
+      </div>
+
+      <div class="script-box">
+        <div class="sl">💬 جمله طلایی برای تماس بعدی</div>
+        "${c.ai_script_tip||''}"
+      </div>
+
+      <div class="follow-box">
+        <div class="fl">🔄 توصیه پیگیری</div>
+        ${c.ai_follow_up||''}
+      </div>
+
+    </div>
+  </div>`;
+}
+
+// ─── real-time events ─────────────────────────────────────────
+function onCallStarted(call) {
+  // یه کارت موقت با spinner بساز و بذار بالای لیست
+  const list = document.getElementById('callsList');
+  // حذف empty state
+  if (list.querySelector('.empty-state')) list.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'call-card new-call analyzing';
+  div.id = `card-${call.call_id || 'pending'}`;
+  div.innerHTML = `
+    <div class="call-header">
+      <div class="avatar">${initials(call.seller_name)}</div>
+      <div class="call-meta-top">
+        <div class="cn">${call.seller_name||'نامشخص'}</div>
+        <div class="cm">
+          ${call.direction==='outgoing'?'<span class="chip chip-out">📞 خروجی</span>':'<span class="chip chip-in">📲 ورودی</span>'}
+          <span>👤 ${call.customer_number||'نامشخص'}</span>
+          <span>⏱ ${fmt(call.duration)}</span>
+        </div>
+      </div>
+    </div>
+    <div class="analysis-box">
+      <div class="analyzing-state"><div class="spinner"></div>در حال آنالیز با هوش مصنوعی...</div>
+    </div>`;
+  list.prepend(div);
+  pendingCards[call.call_id] = div;
+  allCalls.unshift(call);
+}
+
+function onCallAnalyzed(call, stats) {
+  // پیدا کردن کارت موجود و آپدیت
+  const cardId = `card-${call.call_id || call.id}`;
+  let card = document.getElementById(cardId);
+  if (!card) {
+    // اگه کارت موقت نداشتیم، جدید بساز
+    const list = document.getElementById('callsList');
+    if (list.querySelector('.empty-state')) list.innerHTML = '';
+    card = document.createElement('div');
+    card.id = cardId;
+    list.prepend(card);
+  }
+  card.className = 'call-card new-call';
+  const analysis = call.analysis || {};
+  const strengths   = analysis.strengths   || parseJ(call.ai_strengths);
+  const weaknesses  = analysis.weaknesses  || parseJ(call.ai_weaknesses);
+  const suggestions = analysis.suggestions || parseJ(call.ai_suggestions);
+  const score = call.ai_score;
+  call.ai_duration_analysis = analysis.duration_analysis || call.ai_duration_analysis;
+  call.ai_script_tip = analysis.script_tip || call.ai_script_tip;
+  call.ai_follow_up  = analysis.follow_up  || call.ai_follow_up;
+
+  const dur = call.duration||0;
+  const dirChip = call.direction==='outgoing'
+    ? '<span class="chip chip-out">📞 خروجی</span>'
+    : '<span class="chip chip-in">📲 ورودی</span>';
+  card.innerHTML = `
+    <div class="call-header">
+      <div class="avatar">${initials(call.seller_name)}</div>
+      <div class="call-meta-top">
+        <div class="cn">${call.seller_name||'نامشخص'}</div>
+        <div class="cm">
+          ${dirChip}
+          <span>👤 ${call.customer_number||'نامشخص'}</span>
+          <span>⏱ ${fmt(dur)}</span>
+          <span>🕐 ${(call.ended_at||'').substring(11,16)}</span>
+        </div>
+      </div>
+      ${buildScoreRing(score)}
+    </div>
+    ${buildAnalysisHTML(score, call, strengths, weaknesses, suggestions)}`;
+
+  // update sidebar stats
+  if (stats) renderStats(stats);
+  // update allCalls
+  const idx = allCalls.findIndex(c=>c.call_id===call.call_id);
+  if (idx>=0) allCalls[idx]=call; else allCalls.unshift(call);
+}
+
+// ─── init ──────────────────────────────────────────────────────
+document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+loadAll();
+// auto-refresh stats every 60s
+setInterval(()=>fetch('/api/stats').then(r=>r.json()).then(renderStats), 60000);
+</script>
+</body>
+</html>
